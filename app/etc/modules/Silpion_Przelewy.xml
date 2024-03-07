@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+<config>
+    <modules>
+        <Silpion_Przelewy>
+            <active>true</active>
+            <codePool>local</codePool>
+        </Silpion_Przelewy>
+    </modules>
+</config>

@@ -1,0 +1,4 @@
+app/code/local/Silpion/Przelewy
+app/etc/modules/Silpion_Przelewy.xml
+app/design/frontend/base/default/template/payment/form/przelewy24.phtml
+app/design/frontend/base/default/template/payment/info/przelewy24.phtml

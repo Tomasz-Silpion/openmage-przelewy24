@@ -1,0 +1,46 @@
+<?xml version="1.0"?>
+<config>
+    <modules>
+        <Silpion_Przelewy>
+            <version>0.0.1</version>
+        </Silpion_Przelewy>
+    </modules>
+    <global>
+        <helpers>
+            <przelewy24>
+                <class>Silpion_Przelewy_Helper</class>
+            </przelewy24>
+        </helpers>
+        <blocks>
+            <przelewy24>
+                <class>Silpion_Przelewy_Block</class>
+            </przelewy24>
+        </blocks>        
+        <models>
+            <przelewy24>
+                <class>Silpion_Przelewy_Model</class>
+            </przelewy24>
+        </models>
+    </global>
+    <frontend>
+        <routers>
+            <przelewy24>
+                <use>standard</use>
+                <args>
+                    <module>Silpion_Przelewy</module>
+                    <frontName>przelewy24</frontName>
+                </args>
+            </przelewy24>
+        </routers>
+    </frontend>
+    <default>
+        <payment>
+            <przelewy24>
+                <active>0</active>
+                <model>przelewy24/method_przelewy</model>
+                <title>Przelewy24</title>
+                <instructions>Po złożeniu zamówienia zostaniesz przeniesiony na stronę serwisu Przelewy24 w celu dokonania płatności.</instructions>
+            </przelewy24>
+        </payment>
+    </default>
+</config>
