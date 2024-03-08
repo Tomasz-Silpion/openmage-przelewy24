@@ -11,9 +11,9 @@ class Silpion_Przelewy_Helper_Data extends Mage_Core_Helper_Abstract
      * @param string $currency
      * @param string $email
      * @param string $country
-     * @return array
+     * @return Varien_Object
      */
-    public function getTransactionData(
+    public function getTransaction(
         $sessionId,
         $description,
         $amount,
@@ -21,7 +21,7 @@ class Silpion_Przelewy_Helper_Data extends Mage_Core_Helper_Abstract
         $email,
         $country
     ) {
-        return [
+        return new Varien_Object([
             "merchantId" => (int) $this->getConfig('merchant_id'),
             "posId" => (int) $this->getConfig('merchant_id'),
             "sessionId" => $sessionId,
@@ -35,7 +35,24 @@ class Silpion_Przelewy_Helper_Data extends Mage_Core_Helper_Abstract
             "urlStatus" => Mage::getUrl('checkout/cart'),
             "waitForResult" => true,
             "sign" => $this->getSign($sessionId, $amount, $currency),
+        ]);
+    }
+
+    /**
+     * Create unique but reproducible identifier
+     *
+     * @param Varien_Object
+     * @return string
+     */
+    public function getSessionId($object)
+    {
+        $data = [
+            'id' => $object->getId(),
+            'class' => get_class($object),
+            'created_at' => $object->getCreatedAt()
         ];
+
+        return hash('sha384', json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
     }
 
     /**
@@ -67,7 +84,7 @@ class Silpion_Przelewy_Helper_Data extends Mage_Core_Helper_Abstract
             'sessionId' => $sessionId,
             'merchantId'=> (int) $this->getConfig('merchant_id'),
             'amount' => $amount,
-            'currency' =>$currency,
+            'currency' => $currency,
             'crc' => $this->getConfig('crc'),
         ];
 

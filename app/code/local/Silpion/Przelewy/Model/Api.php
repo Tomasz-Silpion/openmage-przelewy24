@@ -16,16 +16,17 @@ class Silpion_Przelewy_Model_Api extends Mage_Payment_Model_Method_Abstract
 
 
     /**
-     * @param array $transactionData
+     * @param Varien_Object $transaction
      * @return string
      * @throws Mage_Core_Exception
      */
-    public function createTransaction($transactionData)
+    public function createTransaction($transaction)
     {
         $client = new Zend_Http_Client();
         $client->setUri($this->getEndpointUrl('api/v1/transaction/register'));
         $client->setMethod(Zend_Http_Client::POST);
-        $client->setParameterPost($transactionData);
+
+        $client->setParameterPost($transaction->getData());
         $client->setHeaders('Content-Type', 'application/json');
         $client->setHeaders('Authorization', 'Basic ' . $this->getBasicAuth());
         $response = $client->request();
@@ -40,6 +41,37 @@ class Silpion_Przelewy_Model_Api extends Mage_Payment_Model_Method_Abstract
 
         if (!empty($responseData->data->token)) {
             return $responseData->data->token;
+        }
+
+        Mage::throwException($response->getMessage());
+    }
+
+    /**
+     * @param string $sessionId
+     * @return string
+     * @throws Mage_Core_Exception
+     */
+    public function getTransactionBySessionId($sessionId)
+    {
+        $client = new Zend_Http_Client();
+        $client->setUri($this->getEndpointUrl("api/v1/transaction/by/sessionId/$sessionId"));
+        $client->setMethod(Zend_Http_Client::GET);
+
+        $client->setHeaders('Content-Type', 'application/json');
+        $client->setHeaders('Authorization', 'Basic ' . $this->getBasicAuth());
+        $response = $client->request();
+
+        $responseBody = $response->getBody();
+
+        if ($responseBody) {
+            $responseData = json_decode($responseBody);
+            if (!empty($responseData->error)) {
+                Mage::throwException($responseData->error);
+            }
+        }
+
+        if (!empty($responseData->data->statement)) {
+            return $responseData->data->statement;
         }
 
         Mage::throwException($response->getMessage());
