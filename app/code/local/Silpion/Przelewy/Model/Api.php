@@ -17,7 +17,7 @@ class Silpion_Przelewy_Model_Api extends Mage_Payment_Model_Method_Abstract
 
     /**
      * @param Varien_Object $transaction
-     * @return string
+     * @return Varien_Object
      * @throws Mage_Core_Exception
      */
     public function createTransaction($transaction)
@@ -33,14 +33,14 @@ class Silpion_Przelewy_Model_Api extends Mage_Payment_Model_Method_Abstract
 
         $responseBody = $response->getBody();
         if ($responseBody) {
-            $responseData = json_decode($responseBody);
-            if (!empty($responseData->error)) {
-                Mage::throwException($responseData->error);
+            $responseData = json_decode($responseBody, true);
+            if (!empty($responseData['error'])) {
+                Mage::throwException($responseData['error']);
             }
         }
 
-        if (!empty($responseData->data->token)) {
-            return $responseData->data->token;
+        if (!empty($responseData['data']['token'])) {
+            return $transaction->setToken($responseData['data']['token']);
         }
 
         Mage::throwException($response->getMessage());
@@ -64,14 +64,15 @@ class Silpion_Przelewy_Model_Api extends Mage_Payment_Model_Method_Abstract
         $responseBody = $response->getBody();
 
         if ($responseBody) {
-            $responseData = json_decode($responseBody);
-            if (!empty($responseData->error)) {
-                Mage::throwException($responseData->error);
+            $responseData = json_decode($responseBody, true);
+            if (!empty($responseData['error'])) {
+                Mage::throwException($responseData['error']);
             }
         }
 
-        if (!empty($responseData->data->statement)) {
-            return $responseData->data->statement;
+        if (!empty($responseData['data'])) {
+            $transaction = new Varien_Object();
+            return $transaction->setData($responseData['data']);
         }
 
         Mage::throwException($response->getMessage());
