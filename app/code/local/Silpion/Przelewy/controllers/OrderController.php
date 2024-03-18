@@ -15,13 +15,14 @@ class Silpion_Przelewy_OrderController extends Mage_Core_Controller_Front_Action
         $transaction = Mage::helper('przelewy24')->getTransaction(
             Mage::helper('przelewy24')->getSessionId($order),
             $order->getIncrementId(),
-            (int) $order->getGrandTotal() * 100,
+            (float) $order->getGrandTotal() * 100,
             $order->getOrderCurrencyCode(),
             $order->getCustomerEmail(),
             $order->getBillingAddress()->getCountryId(),
         );
 
         $transaction->setData('urlReturn', Mage::getUrl('przelewy24/order/return', ['id' => $order->getIncrementId()]));
+        $transaction->setData('urlStatus', Mage::getUrl('przelewy24/order/status', ['id' => $order->getIncrementId()]));
 
         $token = Mage::getModel('przelewy24/api')->createTransaction($transaction)->getToken();
         $redirectUrl = Mage::getModel('przelewy24/api')->getEndpointUrl("trnRequest/$token");
@@ -54,5 +55,17 @@ class Silpion_Przelewy_OrderController extends Mage_Core_Controller_Front_Action
         }
 
         return $this->getResponse()->setRedirect(Mage::getUrl('checkout/cart'));
+    }
+
+    /**
+     * @todo
+     */
+    public function statusAction()
+    {
+        $payload = file_get_contents("php://input");
+        $json = json_decode($payload);
+        if ($json) {
+            $sessionId = $json->sessionId;
+        }
     }
 }
