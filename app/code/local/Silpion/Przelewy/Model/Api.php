@@ -14,6 +14,10 @@ class Silpion_Przelewy_Model_Api extends Mage_Payment_Model_Method_Abstract
      */
     public const SANDBOX_URL = 'https://sandbox.przelewy24.pl/';
 
+    /**
+     * @var string
+     */
+    public const STATUS_SUCCESS = 'success';
 
     /**
      * @param Varien_Object $transaction
@@ -73,6 +77,37 @@ class Silpion_Przelewy_Model_Api extends Mage_Payment_Model_Method_Abstract
         if (!empty($responseData['data'])) {
             $transaction = new Varien_Object();
             return $transaction->setData($responseData['data']);
+        }
+
+        Mage::throwException($response->getMessage());
+    }
+
+    /**
+     * @param Varien_Object $transaction
+     * @return Varien_Object
+     * @throws Mage_Core_Exception
+     */
+    public function verifyTransaction($transaction)
+    {
+        $client = new Zend_Http_Client();
+        $client->setUri($this->getEndpointUrl('api/v1/transaction/verify'));
+        $client->setMethod(Zend_Http_Client::PUT);
+
+        $client->setParameterPost($transaction->getData());
+        $client->setHeaders('Content-Type', 'application/json');
+        $client->setHeaders('Authorization', 'Basic ' . $this->getBasicAuth());
+        $response = $client->request();
+
+        $responseBody = $response->getBody();
+        if ($responseBody) {
+            $responseData = json_decode($responseBody, true);
+            if (!empty($responseData['error'])) {
+                Mage::throwException($responseData['error']);
+            }
+        }
+
+        if (!empty($responseData['data']['status'])) {
+            return $responseData['data']['status'] === self::STATUS_SUCCESS;
         }
 
         Mage::throwException($response->getMessage());

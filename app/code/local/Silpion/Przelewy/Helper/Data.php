@@ -5,6 +5,28 @@
 class Silpion_Przelewy_Helper_Data extends Mage_Core_Helper_Abstract
 {
     /**
+     * Get object from session identifier
+     *
+     * @param string $sessionId
+     * @return string
+     */
+    public function decodeSessionId($sessionId)
+    {
+        return json_decode(base64_decode($sessionId), true);
+    }
+
+    /**
+     * @param array $data
+     * @return string
+     */
+    public function getSign($data)
+    {
+        $data['crc'] = $this->getConfig('crc');
+
+        return hash('sha384', json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
+    }
+
+    /**
      * @param string $sessionId
      * @param string $description
      * @param float $amount
@@ -34,7 +56,12 @@ class Silpion_Przelewy_Helper_Data extends Mage_Core_Helper_Abstract
             "urlReturn" => Mage::getUrl('checkout/onepage/success'),
             "urlStatus" => Mage::getUrl('checkout/cart'),
             "waitForResult" => true,
-            "sign" => $this->getSign($sessionId, $amount, $currency),
+            "sign" => $this->getSign([
+                'sessionId' => $sessionId,
+                'merchantId'=> (int) $this->getConfig('merchant_id'),
+                'amount' => (int) $amount,
+                'currency' => $currency,
+            ]),
         ]);
     }
 
@@ -42,17 +69,18 @@ class Silpion_Przelewy_Helper_Data extends Mage_Core_Helper_Abstract
      * Create unique but reproducible identifier
      *
      * @param Varien_Object
+     * @param string|null $type
      * @return string
      */
-    public function getSessionId($object)
+    public function getSessionId($object, $type = null)
     {
         $data = [
             'id' => $object->getId(),
-            'class' => get_class($object),
-            'created_at' => $object->getCreatedAt()
+            'type' => $type ? $type : get_class($object),
+            'time' => strtotime($object->getCreatedAt())
         ];
 
-        return hash('sha384', json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
+        return base64_encode(json_encode($data));
     }
 
     /**
@@ -70,24 +98,5 @@ class Silpion_Przelewy_Helper_Data extends Mage_Core_Helper_Abstract
     private function getLanguageCode()
     {
         return substr(Mage::app()->getLocale()->getLocaleCode(), 0, 2);
-    }
-
-    /**
-     * @param string $sessionId,
-     * @param float $amount
-     * @param string $currency
-     * @return string
-     */
-    private function getSign($sessionId, $amount, $currency)
-    {
-        $data = [
-            'sessionId' => $sessionId,
-            'merchantId'=> (int) $this->getConfig('merchant_id'),
-            'amount' => $amount,
-            'currency' => $currency,
-            'crc' => $this->getConfig('crc'),
-        ];
-
-        return hash('sha384', json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
     }
 }

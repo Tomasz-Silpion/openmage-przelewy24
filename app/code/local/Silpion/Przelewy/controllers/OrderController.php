@@ -11,9 +11,10 @@ class Silpion_Przelewy_OrderController extends Mage_Core_Controller_Front_Action
     {
         $orderId = Mage::getSingleton('checkout/session')->getLastRealOrderId();
         $order = Mage::getModel('sales/order')->loadByIncrementId($orderId);
+        $sessionId = Mage::helper('przelewy24')->getSessionId($order, 'sales/order');
 
         $transaction = Mage::helper('przelewy24')->getTransaction(
-            Mage::helper('przelewy24')->getSessionId($order),
+            $sessionId,
             $order->getIncrementId(),
             (float) $order->getGrandTotal() * 100,
             $order->getOrderCurrencyCode(),
@@ -21,7 +22,7 @@ class Silpion_Przelewy_OrderController extends Mage_Core_Controller_Front_Action
             $order->getBillingAddress()->getCountryId(),
         );
 
-        $transaction->setData('urlReturn', Mage::getUrl('przelewy24/order/return', ['id' => $order->getIncrementId()]));
+        $transaction->setData('urlReturn', Mage::getUrl('przelewy24/order/return', ['sessionId' => $sessionId]));
         $transaction->setData('urlStatus', Mage::getUrl('przelewy24/order/status', ['id' => $order->getIncrementId()]));
 
         $token = Mage::getModel('przelewy24/api')->createTransaction($transaction)->getToken();
@@ -35,37 +36,80 @@ class Silpion_Przelewy_OrderController extends Mage_Core_Controller_Front_Action
      */
     public function returnAction()
     {
-        $orderId = $this->getRequest()->getParam('id');
-        $order = Mage::getModel('sales/order')->loadByIncrementId($orderId);
+        $sessionId = $this->getRequest()->getParam('sessionId');
+        $sessionData = Mage::helper('przelewy24')->decodeSessionId($sessionId);
+        if (!empty($sessionData['id'])) {
+            $order = Mage::getModel('sales/order')->load($sessionData['id']);
+            $transaction = Mage::getModel('przelewy24/api')->getTransactionBySessionId($sessionId);
+            if ($transaction->getStatus() && ($statement = $transaction->getStatement())) {
+                $payment = $order->getPayment();
+                $payment->setTransactionId($statement)
+                    ->setCurrencyCode($order->getOrderCurrencyCode())
+                    ->setShouldCloseParentTransaction(true)
+                    ->setIsTransactionClosed(true)
+                    ->registerCaptureNotification($order->getGrandTotal());
 
-        $sessionId = Mage::helper('przelewy24')->getSessionId($order);
-        $transaction = Mage::getModel('przelewy24/api')->getTransactionBySessionId($sessionId);
+                $order->save();
 
-        if ($transaction->getStatus() && ($statement = $transaction->getStatement())) {
-            $payment = $order->getPayment();
-            $payment->setTransactionId($statement)
-                ->setCurrencyCode($order->getOrderCurrencyCode())
-                ->setShouldCloseParentTransaction(true)
-                ->setIsTransactionClosed(true)
-                ->registerCaptureNotification($order->getGrandTotal());
-
-            $order->save();
-
-            return $this->getResponse()->setRedirect(Mage::getUrl('checkout/onepage/success'));
+                return $this->getResponse()->setRedirect(Mage::getUrl('checkout/onepage/success'));
+            }
         }
 
         return $this->getResponse()->setRedirect(Mage::getUrl('checkout/cart'));
     }
 
     /**
-     * @todo
+     * @return Mage_Core_Controller_Response_Http
+     * @throws Exception
      */
     public function statusAction()
     {
-        $payload = file_get_contents("php://input");
-        $json = json_decode($payload);
-        if ($json) {
-            $sessionId = $json->sessionId;
+        $json = file_get_contents("php://input");
+
+        $payload = json_decode($json, true);
+        if ($payload) {
+            $sessionId = $payload['sessionId'];
+            $transaction = new Varien_Object();
+            $transaction->setData([
+                'merchantId' => $payload['merchantId'],
+                'posId' => $payload['posId'],
+                'currency' => $payload['currency'],
+                'sessionId' => $payload['sessionId'],
+                'orderId' => $payload['orderId'],
+                'amount' => $payload['amount'],
+                'sign' => Mage::helper('przelewy24')->getSign([
+                    'sessionId' => $sessionId,
+                    'orderId' => $payload['orderId'],
+                    'amount' => $payload['amount'],
+                    'currency' => $payload['currency'],
+                ]),
+            ]);
+
+
+            $sessionData = Mage::helper('przelewy24')->decodeSessionId($sessionId);
+            if (!empty($sessionData['id'])) {
+                $order = Mage::getModel('sales/order')->load($sessionData['id']);
+                if ($result = Mage::getModel('przelewy24/api')->verifyTransaction($transaction)) {
+                    $transaction = Mage::getModel('przelewy24/api')->getTransactionBySessionId($sessionId);
+                    if ($transaction->getStatus() && ($statement = $transaction->getStatement())) {
+                        $payment = $order->getPayment();
+                        $payment->setTransactionId($statement)
+                                ->setCurrencyCode($order->getOrderCurrencyCode())
+                                ->setShouldCloseParentTransaction(true)
+                                ->setIsTransactionClosed(true)
+                                ->registerCaptureNotification($transaction->getAmount() / 100);
+
+                        $order->save();
+
+                        $this->getResponse()->clearHeaders()->setHeader('Content-type', 'application/json', true);
+                        return $this->getResponse()->setBody(Mage::helper('core')->jsonEncode([
+                            'status' => Silpion_Przelewy_Model_Api::STATUS_SUCCESS
+                        ]));
+                    }
+                }
+            }
+
+            throw new Exception('Order not found');
         }
     }
 }
