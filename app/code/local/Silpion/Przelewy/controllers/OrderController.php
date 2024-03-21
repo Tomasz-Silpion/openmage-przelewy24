@@ -13,7 +13,7 @@ class Silpion_Przelewy_OrderController extends Mage_Core_Controller_Front_Action
         $order = Mage::getModel('sales/order')->loadByIncrementId($orderId);
         $sessionId = Mage::helper('przelewy24')->getSessionId($order, 'sales/order');
 
-        $transaction = Mage::helper('przelewy24')->getTransaction(
+        $transaction = Mage::helper('przelewy24')->createTransaction(
             $sessionId,
             $order->getIncrementId(),
             (float) $order->getGrandTotal() * 100,
@@ -38,20 +38,25 @@ class Silpion_Przelewy_OrderController extends Mage_Core_Controller_Front_Action
     {
         $sessionId = $this->getRequest()->getParam('sessionId');
         $sessionData = Mage::helper('przelewy24')->decodeSessionId($sessionId);
-        if (!empty($sessionData['id'])) {
-            $order = Mage::getModel('sales/order')->load($sessionData['id']);
-            $transaction = Mage::getModel('przelewy24/api')->getTransactionBySessionId($sessionId);
-            if ($transaction->getStatus() && ($statement = $transaction->getStatement())) {
-                $payment = $order->getPayment();
-                $payment->setTransactionId($statement)
-                    ->setCurrencyCode($order->getOrderCurrencyCode())
-                    ->setShouldCloseParentTransaction(true)
-                    ->setIsTransactionClosed(true)
-                    ->registerCaptureNotification($order->getGrandTotal());
+        $transaction = Mage::getModel('przelewy24/api')->getTransactionBySessionId($sessionId);
+        if ($transaction->getStatus() && ($statement = $transaction->getStatement())) {
+            if (!empty($sessionData['id'])) {
+                $order = Mage::getModel('sales/order')->load($sessionData['id']);
 
-                $order->save();
+                $isCorrectAmount = Mage::helper('przelewy24')->isEqual($order->getGrandTotal(), $transaction->getAmount() / 100);
+                $sessionData = Mage::helper('przelewy24')->decodeSessionId($sessionId);
+                if ($isCorrectAmount) {
+                    $payment = $order->getPayment();
+                    $payment->setTransactionId($statement)
+                        ->setCurrencyCode($order->getOrderCurrencyCode())
+                        ->setShouldCloseParentTransaction(true)
+                        ->setIsTransactionClosed(true)
+                        ->registerCaptureNotification($order->getGrandTotal());
 
-                return $this->getResponse()->setRedirect(Mage::getUrl('checkout/onepage/success'));
+                    $order->save();
+
+                    return $this->getResponse()->setRedirect(Mage::getUrl('checkout/onepage/success'));
+                }
             }
         }
 
@@ -69,27 +74,17 @@ class Silpion_Przelewy_OrderController extends Mage_Core_Controller_Front_Action
         $payload = json_decode($json, true);
         if ($payload) {
             $sessionId = $payload['sessionId'];
-            $transaction = new Varien_Object();
-            $transaction->setData([
-                'merchantId' => $payload['merchantId'],
-                'posId' => $payload['posId'],
-                'currency' => $payload['currency'],
-                'sessionId' => $payload['sessionId'],
-                'orderId' => $payload['orderId'],
-                'amount' => $payload['amount'],
-                'sign' => Mage::helper('przelewy24')->getSign([
-                    'sessionId' => $sessionId,
-                    'orderId' => $payload['orderId'],
-                    'amount' => $payload['amount'],
-                    'currency' => $payload['currency'],
-                ]),
-            ]);
-
-
             $sessionData = Mage::helper('przelewy24')->decodeSessionId($sessionId);
             if (!empty($sessionData['id'])) {
                 $order = Mage::getModel('sales/order')->load($sessionData['id']);
-                if ($result = Mage::getModel('przelewy24/api')->verifyTransaction($transaction)) {
+                $transactionResult = Mage::helper('przelewy24')->verifyTransaction(
+                    $sessionId,
+                    $payload['orderId'],
+                    $payload['amount'],
+                    $payload['curency']
+                );
+
+                if ($transactionResult) {
                     $transaction = Mage::getModel('przelewy24/api')->getTransactionBySessionId($sessionId);
                     if ($transaction->getStatus() && ($statement = $transaction->getStatement())) {
                         $payment = $order->getPayment();
@@ -102,6 +97,7 @@ class Silpion_Przelewy_OrderController extends Mage_Core_Controller_Front_Action
                         $order->save();
 
                         $this->getResponse()->clearHeaders()->setHeader('Content-type', 'application/json', true);
+
                         return $this->getResponse()->setBody(Mage::helper('core')->jsonEncode([
                             'status' => Silpion_Przelewy_Model_Api::STATUS_SUCCESS
                         ]));

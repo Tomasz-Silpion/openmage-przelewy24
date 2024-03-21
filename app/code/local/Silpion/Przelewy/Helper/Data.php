@@ -35,7 +35,7 @@ class Silpion_Przelewy_Helper_Data extends Mage_Core_Helper_Abstract
      * @param string $country
      * @return Varien_Object
      */
-    public function getTransaction(
+    public function createTransaction(
         $sessionId,
         $description,
         $amount,
@@ -66,6 +66,33 @@ class Silpion_Przelewy_Helper_Data extends Mage_Core_Helper_Abstract
     }
 
     /**
+     * @param string $sessionId
+     * @param int $orderId
+     * @param float $amount
+     * @param string $currency
+     * @return bool
+     */
+    public function verifyTransaction($sessionId, $orderId, $amount, $currency)
+    {
+        $transaction = new Varien_Object([
+            "merchantId" => (int) $this->getConfig('merchant_id'),
+            "posId" => (int) $this->getConfig('merchant_id'),
+            "orderId" => $orderId,
+            "sessionId" => $sessionId,
+            "amount" => $amount,
+            "currency" => $currency,
+            "sign" => $this->getSign([
+                'sessionId' => $sessionId,
+                'orderId'=> $orderId,
+                'amount' => (int) $amount,
+                'currency' => $currency,
+            ]),
+        ]);
+
+        return Mage::getModel('przelewy24/api')->verifyTransaction($transaction);
+    }
+
+    /**
      * Create unique but reproducible identifier
      *
      * @param Varien_Object
@@ -81,6 +108,16 @@ class Silpion_Przelewy_Helper_Data extends Mage_Core_Helper_Abstract
         ];
 
         return base64_encode(json_encode($data));
+    }
+
+    /**
+     * @param float $a
+     * @param float $b
+     * @return bool
+     */
+    public function isEqual($a, $b)
+    {
+        return abs(((float) $a - (float) $b)) <= 0.01;
     }
 
     /**
