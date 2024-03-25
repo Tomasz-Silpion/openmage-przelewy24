@@ -5,7 +5,7 @@
 class Silpion_Przelewy_OrderController extends Mage_Core_Controller_Front_Action
 {
     /**
-     * @return void
+     * @return Mage_Core_Controller_Response_Http
      */
     public function redirectAction()
     {
@@ -19,7 +19,7 @@ class Silpion_Przelewy_OrderController extends Mage_Core_Controller_Front_Action
             (float) $order->getGrandTotal() * 100,
             $order->getOrderCurrencyCode(),
             $order->getCustomerEmail(),
-            $order->getBillingAddress()->getCountryId(),
+            $order->getBillingAddress()->getCountryId()
         );
 
         $transaction->setData('urlReturn', Mage::getUrl('przelewy24/order/return', ['sessionId' => $sessionId]));
@@ -28,7 +28,42 @@ class Silpion_Przelewy_OrderController extends Mage_Core_Controller_Front_Action
         $token = Mage::getModel('przelewy24/api')->createTransaction($transaction)->getToken();
         $redirectUrl = Mage::getModel('przelewy24/api')->getEndpointUrl("trnRequest/$token");
 
-        Mage::app()->getResponse()->setRedirect($redirectUrl)->sendResponse();
+        return Mage::app()->getResponse()->setRedirect($redirectUrl)->sendResponse();
+    }
+
+    /**
+     * @return Mage_Core_Controller_Response_Http
+     */
+    public function repayAction()
+    {
+        $orderId = $this->getRequest()->getParam('orderId');
+        $orderDate = $this->getRequest()->getParam('orderDate');
+
+        $order = Mage::getModel('sales/order')->load($orderId);
+        if ($order->getCreatedAt() === $orderDate) {
+            Mage::getSingleton('checkout/session')->setLastRealOrderId($order->getIncrementId());
+
+            $sessionId = Mage::helper('przelewy24')->getSessionId($order, 'sales/order', round(time() / (10 * 60)) * (10 * 60));
+
+            $transaction = Mage::helper('przelewy24')->createTransaction(
+                $sessionId,
+                $order->getIncrementId(),
+                (float) $order->getGrandTotal() * 100,
+                $order->getOrderCurrencyCode(),
+                $order->getCustomerEmail(),
+                $order->getBillingAddress()->getCountryId()
+            );
+
+            $transaction->setData('urlReturn', Mage::getUrl('przelewy24/order/return', ['sessionId' => $sessionId]));
+            $transaction->setData('urlStatus', Mage::getUrl('przelewy24/order/status', ['id' => $order->getIncrementId()]));
+
+            $token = Mage::getModel('przelewy24/api')->createTransaction($transaction)->getToken();
+            $redirectUrl = Mage::getModel('przelewy24/api')->getEndpointUrl("trnRequest/$token");
+
+            return Mage::app()->getResponse()->setRedirect($redirectUrl)->sendResponse();
+        }
+
+        $this->_forward('noRoute');
     }
 
     /**

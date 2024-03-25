@@ -97,14 +97,15 @@ class Silpion_Przelewy_Helper_Data extends Mage_Core_Helper_Abstract
      *
      * @param Varien_Object
      * @param string|null $type
+     * @param int|null $timestamp
      * @return string
      */
-    public function getSessionId($object, $type = null)
+    public function getSessionId($object, $type = null, $timestamp = null)
     {
         $data = [
             'id' => $object->getId(),
             'type' => $type ? $type : get_class($object),
-            'time' => strtotime($object->getCreatedAt())
+            'time' => $timestamp ? $timestamp : strtotime($object->getCreatedAt())
         ];
 
         return base64_encode(json_encode($data));
