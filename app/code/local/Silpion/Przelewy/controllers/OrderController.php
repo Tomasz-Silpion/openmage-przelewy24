@@ -105,6 +105,7 @@ class Silpion_Przelewy_OrderController extends Mage_Core_Controller_Front_Action
     public function statusAction()
     {
         $json = file_get_contents("php://input");
+        Mage::helper('przelewy24')->log($json);
 
         $payload = json_decode($json, true);
         if ($payload) {
@@ -116,7 +117,7 @@ class Silpion_Przelewy_OrderController extends Mage_Core_Controller_Front_Action
                     $sessionId,
                     $payload['orderId'],
                     $payload['amount'],
-                    $payload['curency']
+                    $payload['currency']
                 );
 
                 if ($transactionResult) {

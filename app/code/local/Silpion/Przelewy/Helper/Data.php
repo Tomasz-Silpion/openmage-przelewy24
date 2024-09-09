@@ -122,6 +122,17 @@ class Silpion_Przelewy_Helper_Data extends Mage_Core_Helper_Abstract
     }
 
     /**
+     * @param mixed $data
+     * @return void
+     */
+    public function log($data)
+    {
+        if (Mage::getModel('przelewy24/method_przelewy')->getConfigData('log')) {
+            Mage::log($data, null, 'przelewy24.log', true);
+        }
+    }
+
+    /**
      * @param string $path
      * @return string
      */
