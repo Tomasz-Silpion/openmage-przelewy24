@@ -16,7 +16,7 @@ class Silpion_Przelewy_OrderController extends Mage_Core_Controller_Front_Action
         $transaction = Mage::helper('przelewy24')->createTransaction(
             $sessionId,
             $order->getIncrementId(),
-            (float) $order->getGrandTotal() * 100,
+            round($order->getGrandTotal() * 100),
             $order->getOrderCurrencyCode(),
             $order->getCustomerEmail(),
             $order->getBillingAddress()->getCountryId()
@@ -48,7 +48,7 @@ class Silpion_Przelewy_OrderController extends Mage_Core_Controller_Front_Action
             $transaction = Mage::helper('przelewy24')->createTransaction(
                 $sessionId,
                 $order->getIncrementId(),
-                (float) $order->getGrandTotal() * 100,
+                round($order->getGrandTotal() * 100),
                 $order->getOrderCurrencyCode(),
                 $order->getCustomerEmail(),
                 $order->getBillingAddress()->getCountryId()
