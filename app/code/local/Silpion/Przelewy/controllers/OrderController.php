@@ -82,13 +82,16 @@ class Silpion_Przelewy_OrderController extends Mage_Core_Controller_Front_Action
                 $sessionData = Mage::helper('przelewy24')->decodeSessionId($sessionId);
                 if ($isCorrectAmount) {
                     $payment = $order->getPayment();
-                    $payment->setTransactionId($statement)
-                        ->setCurrencyCode($order->getOrderCurrencyCode())
-                        ->setShouldCloseParentTransaction(true)
-                        ->setIsTransactionClosed(true)
-                        ->registerCaptureNotification($order->getGrandTotal());
 
-                    $order->save();
+                    if ($payment && $payment->getLastTransId() !== $statement) {
+                        $payment->setTransactionId($statement)
+                            ->setCurrencyCode($order->getOrderCurrencyCode())
+                            ->setShouldCloseParentTransaction(true)
+                            ->setIsTransactionClosed(true)
+                            ->registerCaptureNotification($order->getGrandTotal());
+
+                        $order->save();
+                    }
 
                     return $this->getResponse()->setRedirect(Mage::getUrl('checkout/onepage/success'));
                 }
@@ -124,13 +127,16 @@ class Silpion_Przelewy_OrderController extends Mage_Core_Controller_Front_Action
                     $transaction = Mage::getModel('przelewy24/api')->getTransactionBySessionId($sessionId);
                     if ($transaction->getStatus() && ($statement = $transaction->getStatement())) {
                         $payment = $order->getPayment();
-                        $payment->setTransactionId($statement)
-                                ->setCurrencyCode($order->getOrderCurrencyCode())
-                                ->setShouldCloseParentTransaction(true)
-                                ->setIsTransactionClosed(true)
-                                ->registerCaptureNotification($transaction->getAmount() / 100);
 
-                        $order->save();
+                        if ($payment && $payment->getLastTransId() !== $statement) {
+                            $payment->setTransactionId($statement)
+                                    ->setCurrencyCode($order->getOrderCurrencyCode())
+                                    ->setShouldCloseParentTransaction(true)
+                                    ->setIsTransactionClosed(true)
+                                    ->registerCaptureNotification($transaction->getAmount() / 100);
+
+                            $order->save();
+                        }
 
                         $this->getResponse()->clearHeaders()->setHeader('Content-type', 'application/json', true);
 
