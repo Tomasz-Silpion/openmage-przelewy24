@@ -58,6 +58,7 @@ class Silpion_Przelewy_Model_Api extends Mage_Payment_Model_Method_Abstract
     public function getTransactionBySessionId($sessionId)
     {
         $client = new Zend_Http_Client();
+        $sessionId = urlencode($sessionId);
         $client->setUri($this->getEndpointUrl("api/v1/transaction/by/sessionId/$sessionId"));
         $client->setMethod(Zend_Http_Client::GET);
 

@@ -8,11 +8,16 @@ class Silpion_Przelewy_Helper_Data extends Mage_Core_Helper_Abstract
      * Get object from session identifier
      *
      * @param string $sessionId
-     * @return string
+     * @return array
      */
     public function decodeSessionId($sessionId)
     {
-        return json_decode(base64_decode($sessionId), true);
+        $sessionParams = explode('|', $sessionId);
+
+        return [
+           'id' => $sessionParams[0],
+           'time' => $sessionParams[1],
+        ];
     }
 
     /**
@@ -96,19 +101,12 @@ class Silpion_Przelewy_Helper_Data extends Mage_Core_Helper_Abstract
      * Create unique but reproducible identifier
      *
      * @param Varien_Object
-     * @param string|null $type
      * @param int|null $timestamp
      * @return string
      */
-    public function getSessionId($object, $type = null, $timestamp = null)
+    public function getSessionId($object, $timestamp = null)
     {
-        $data = [
-            'id' => $object->getId(),
-            'type' => $type ? $type : get_class($object),
-            'time' => $timestamp ? $timestamp : strtotime($object->getCreatedAt())
-        ];
-
-        return base64_encode(json_encode($data));
+        return ($object->getIncrementId() ? $object->getIncrementId() : $object->getId()) . '|' . ($timestamp ? $timestamp : strtotime($object->getCreatedAt()));
     }
 
     /**
