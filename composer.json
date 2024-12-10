@@ -1,0 +1,9 @@
+{
+    "name": "tomasz-silpion/openmage-przelewy24",
+    "license": "GPL-3.0-or-later",
+    "type": "magento-module",
+    "description": "Przelewy24 payment plugin for OpenMage.",
+    "extra": {
+        "magento-root-dir": "test/"
+    }
+}
