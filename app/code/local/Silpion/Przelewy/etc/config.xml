@@ -2,7 +2,7 @@
 <config>
     <modules>
         <Silpion_Przelewy>
-            <version>0.0.1</version>
+            <version>0.1.0</version>
         </Silpion_Przelewy>
     </modules>
     <global>
@@ -19,8 +19,27 @@
         <models>
             <przelewy24>
                 <class>Silpion_Przelewy_Model</class>
+                <resourceModel>przelewy24_resource</resourceModel>
             </przelewy24>
+            <przelewy24_resource>
+                <class>Silpion_Przelewy_Model_Resource</class>
+                <entities>
+                    <payment>
+                        <table>silpion_przelewy_payment</table>
+                    </payment>
+                </entities>
+            </przelewy24_resource>
         </models>
+        <resources>
+            <silpion_przelewy_setup>
+                <setup>
+                    <module>Silpion_Przelewy</module>
+                </setup>
+                <connection>
+                    <use>core_setup</use>
+                </connection>
+            </silpion_przelewy_setup>
+        </resources>
     </global>
     <frontend>
         <routers>
@@ -33,6 +52,17 @@
             </przelewy24>
         </routers>
     </frontend>
+    <admin>
+        <routers>
+            <adminhtml>
+                <args>
+                    <modules>
+                        <przelewy24 before='Mage_Adminhtml'>Silpion_Przelewy_Adminhtml</przelewy24>
+                    </modules>
+                </args>
+            </adminhtml>
+        </routers>
+    </admin>
     <default>
         <payment>
             <przelewy24>

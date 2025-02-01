@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<config>
+    <acl>
+        <resources>
+            <admin>
+                <children>
+                    <system>
+                        <children>
+                            <silpion_przelewy module="przelewy24" translate="title">
+                                <title>Przelewy24</title>
+                                <sort_order>80</sort_order>
+                            </silpion_przelewy>
+                        </children>
+                    </system>
+                </children>
+            </admin>
+        </resources>
+    </acl>
+    <menu>
+        <system>
+            <children>
+                <silpion_przelewy module="przelewy24">
+                    <title>Przelewy24</title>
+                    <sort_order>80</sort_order>
+                    <action>adminhtml/przelewyPayment</action>
+                </silpion_przelewy>
+            </children>
+        </system>
+    </menu>
+</config>
