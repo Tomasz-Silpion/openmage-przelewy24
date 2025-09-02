@@ -9,7 +9,8 @@ class Silpion_Przelewy_Block_Adminhtml_Payment extends Mage_Adminhtml_Block_Widg
         $this->_objectId = "id";
         $this->_controller = 'adminhtml_payment';
         $this->_blockGroup = 'przelewy24';
-        $this->_headerText = Mage::helper('przelewy')->__('Payments');
+        $this->_headerText = Mage::helper('przelewy24')->__('Payments');
         parent::__construct();
+        $this->_removeButton('add');
     }
 }
