@@ -1,4 +1,5 @@
 <?php
+
 /**
  * @author Tomasz Gregorczyk <tomasz@silpion.com.pl>
  */
@@ -18,6 +19,16 @@ class Silpion_Przelewy_Model_Api extends Mage_Payment_Model_Method_Abstract
      * @var string
      */
     public const STATUS_SUCCESS = 'success';
+
+    /**
+     * @var string
+     */
+    public const STATUS_PROCESSING = 'processing';
+
+    /**
+     * @var string
+     */
+    public const STATUS_ERROR = 'error';
 
     /**
      * @param Varien_Object $transaction

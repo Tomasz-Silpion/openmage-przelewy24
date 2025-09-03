@@ -1,4 +1,5 @@
 <?php
+
 /**
  * @author Tomasz Gregorczyk <tomasz@silpion.com.pl>
  */
@@ -63,7 +64,7 @@ class Silpion_Przelewy_Helper_Data extends Mage_Core_Helper_Abstract
             "waitForResult" => true,
             "sign" => $this->getSign([
                 'sessionId' => $sessionId,
-                'merchantId'=> (int) $this->getConfig('merchant_id'),
+                'merchantId' => (int) $this->getConfig('merchant_id'),
                 'amount' => (int) $amount,
                 'currency' => $currency,
             ]),
@@ -88,7 +89,7 @@ class Silpion_Przelewy_Helper_Data extends Mage_Core_Helper_Abstract
             "currency" => $currency,
             "sign" => $this->getSign([
                 'sessionId' => $sessionId,
-                'orderId'=> $orderId,
+                'orderId' => $orderId,
                 'amount' => (int) $amount,
                 'currency' => $currency,
             ]),

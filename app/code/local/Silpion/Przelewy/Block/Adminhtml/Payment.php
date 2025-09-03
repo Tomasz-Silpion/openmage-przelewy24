@@ -1,4 +1,5 @@
 <?php
+
 /**
  * class Silpion_Przelewy_Block_Adminhtml_Link
  */
