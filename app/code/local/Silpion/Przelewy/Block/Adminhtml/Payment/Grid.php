@@ -65,6 +65,14 @@ class Silpion_Przelewy_Block_Adminhtml_Payment_Grid extends Mage_Adminhtml_Block
             'index' => 'transaction_id',
         ));
 
+        $this->addColumn('status', array(
+            'header' => Mage::helper('przelewy24')->__('Status'),
+            'width' => '120px',
+            'index' => 'status',
+            'type' => 'options',
+            'options' => Mage::getModel('przelewy24/system_config_source_status')->toArray(),
+        ));
+
         $this->addColumn('created_at', array(
             'header' => Mage::helper('przelewy24')->__('Created At'),
             'align' => 'left',

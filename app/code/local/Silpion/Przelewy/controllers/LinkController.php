@@ -17,6 +17,7 @@ class Silpion_Przelewy_LinkController extends Mage_Core_Controller_Front_Action
             'amount' => $this->getRequest()->getParam('amount'),
             'currency_code' => $this->getRequest()->getParam('currency') ?? $store->getCurrentCurrencyCode(),
             'email' => $this->getRequest()->getParam('email') ?? Mage::getStoreConfig('trans_email/ident_general/email', $store),
+            'status' => Silpion_Przelewy_Model_Api::STATUS_PROCESSING,
         ];
 
         $payment = Mage::getModel('przelewy24/payment')->setData($paymentData);
@@ -59,7 +60,9 @@ class Silpion_Przelewy_LinkController extends Mage_Core_Controller_Front_Action
 
                 $isCorrectAmount = Mage::helper('przelewy24')->isEqual($payment->getAmount(), $transaction->getAmount() / 100);
                 if ($isCorrectAmount) {
-                    $payment->setTransactionId($statement)->save();
+                    $payment->setTransactionId($statement)
+                            ->setStatus(Silpion_Przelewy_Model_Api::STATUS_SUCCESS)
+                            ->save();
                     Mage::getSingleton('core/session')->addSuccess(Mage::helper('przelewy24')->__('Dziękujemy za płatność!'));
                     return $this->getResponse()->setRedirect(Mage::getUrl('checkout/onepage/success'));
                 }
@@ -93,7 +96,9 @@ class Silpion_Przelewy_LinkController extends Mage_Core_Controller_Front_Action
                 if ($transactionResult) {
                     $transaction = Mage::getModel('przelewy24/api')->getTransactionBySessionId($sessionId);
                     if ($transaction->getStatus() && ($statement = $transaction->getStatement())) {
-                        $payment->setTransactionId($statement)->save();
+                        $payment->setTransactionId($statement)
+                                ->setStatus(Silpion_Przelewy_Model_Api::STATUS_SUCCESS)
+                                ->save();
                         $this->getResponse()->clearHeaders()->setHeader('Content-type', 'application/json', true);
                     }
 
