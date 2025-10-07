@@ -7,6 +7,10 @@ class Silpion_Przelewy_Block_Adminhtml_Payment_Grid extends Mage_Adminhtml_Block
 {
     public function __construct()
     {
+        $this->setId('payment_id');
+        $this->setDefaultSort('payment_id');
+        $this->setDefaultDir('DESC');
+        $this->setSaveParametersInSession(true);
         parent::__construct();
     }
 
@@ -42,7 +46,7 @@ class Silpion_Przelewy_Block_Adminhtml_Payment_Grid extends Mage_Adminhtml_Block
         $this->addColumn('entity_id', array(
             'header' => Mage::helper('przelewy24')->__('Entity ID'),
             'width' => '120px',
-            'index' => 'name',
+            'index' => 'entity_id',
             'type'  => 'number',
         ));
 
