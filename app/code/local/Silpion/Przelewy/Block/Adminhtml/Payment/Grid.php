@@ -101,6 +101,10 @@ class Silpion_Przelewy_Block_Adminhtml_Payment_Grid extends Mage_Adminhtml_Block
      */
     public function getRowUrl($row)
     {
+        if (Silpion_Przelewy_Helper_Data::ALLOW_ADMIN_PAYMENT_EDIT) {
+            return $this->getUrl('*/*/edit', ['id' => $row->getId()]);
+        }
+
         return '#';
     }
 }

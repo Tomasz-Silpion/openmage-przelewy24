@@ -6,6 +6,11 @@
 class Silpion_Przelewy_Helper_Data extends Mage_Core_Helper_Abstract
 {
     /**
+     * @var bool
+     */
+    public const ALLOW_ADMIN_PAYMENT_EDIT = false;
+
+    /**
      * Get object from session identifier
      *
      * @param string $sessionId
