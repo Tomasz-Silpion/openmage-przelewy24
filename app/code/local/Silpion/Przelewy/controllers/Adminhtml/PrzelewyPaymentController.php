@@ -8,10 +8,7 @@ class Silpion_Przelewy_Adminhtml_PrzelewyPaymentController extends Mage_Adminhtm
     /**
      * @inheritDoc
      */
-    protected function _isAllowed()
-    {
-        return Mage::getSingleton('admin/session')->isAllowed('system/silpion_przelewy');
-    }
+    public const ADMIN_RESOURCE = 'system/silpion_przelewy';
 
     /**
      * @interitDoc
